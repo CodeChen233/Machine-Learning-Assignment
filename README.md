@@ -1,28 +1,75 @@
-一、人群密度检测
-    人群密度检测的重要意义表现在：
-1. 在交通调度方面，通过对交通线路中各站点以及车内乘客密度的实时监测，可以实时采集到客流信息并作出调度调整。
-2. 通过对建筑物中人群活动情况的统计，可以知道哪些地方易发生人群拥挤，对建筑物设计起到参考作用。
-3. 通过对人群密度的实时监测，可以达到预防因人群拥堵而引起人群灾祸的目的。
+# Single Image Crowd Counting via Multi Column Convolutional Neural Network
 
-人群计数与人群密度分析是人群行人分析中重要的组成内容。
-    通常的方法大致可以分为三种：
-1. 行人检测：最直接，适用于人群较稀疏的场景。通过检测视频中的每一个行人，进而得到人群计数的结果。常采用基于部件模型（如 DPM）的检测器。
-2. 视觉特征轨迹聚类：对于视频监控，一般用光流跟踪和聚类的方法，通过轨迹聚类得到的数目来估计人数。
-3. 基于特征的回归：其具有大规模人群计数的能力。建立图像特征和图像人数的回归模型，通过测量图像特征从而估计场景中的人数。
+This is an unofficial implementation of CVPR 2016 paper ["Single Image Crowd Counting via Multi Column Convolutional Neural Network"](http://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Zhang_Single-Image_Crowd_Counting_CVPR_2016_paper.pdf)
 
-行人密度估计相关数据集：
-1. WorldExpo’10 Crowd Counting Dataset大型跨场景人口统计数据集，专注于跨场景计数的大数据集。它包括由 108 个监控摄像头拍摄的 1132 个带注释的视频序列，全部来自上海 2010 年世界博览会。由于大多数相机具有不相交的鸟瞰图，因此它们涵盖了各种各样的场景。
-2. ShanghaiTech总共 1198 张标记图片，数据集分为两部分 part_A 和 part_B，part_B 部分的图片相较于part_A 部分的图片人群分布更为稀疏。MCNN 方法中首次建立该数据集，part_A 部分 300 用于训练，182 张用于测试；part_B 部分 400 张用于训练，316 张用于测试。
-3. UCF-QNRF迄今为止最大的数据集（就注释数量而言），用于培训和评估人群计数方法及本地范化它包含 1535 个图像，分别分为 1201 和 334 个图像的训练集和测试集。此数据集最适合训练非常深的卷积神经网络（CNN），因为它在密集的人群场景中比任何其他可用的人群计数数据集包含更多注释的人类。
-    
-明确分工：
+# Installation
+1. Install pytorch
+2. Clone this repository
+  ```Shell
+  git clone https://github.com/svishwa/crowdcount-mcnn.git
+  ```
+  We'll call the directory that you cloned crowdcount-mcnn `ROOT`
 
-1.确定作业使用的机器学习方法，数据集。
 
-2.针对所选问题模拟一个现实应用下的场景，描绘其在具体场景下的应用价值。
+# Data Setup
+1. Download ShanghaiTech Dataset from   
+   Dropbox:   https://www.dropbox.com/s/fipgjqxl7uj8hd5/ShanghaiTech.zip?dl=0
+   
+   Baidu Disk: http://pan.baidu.com/s/1nuAYslz
+2. Create Directory 
+  ```Shell
+  mkdir ROOT/data/original/shanghaitech/  
+  ```
+3. Save "part_A_final" under ROOT/data/original/shanghaitech/
+4. Save "part_B_final" under ROOT/data/original/shanghaitech/
+5. cd ROOT/data_preparation/
 
-3.寻找开源代码，运行并评估准确度以及性能。
+   run create_gt_test_set_shtech.m in matlab to create ground truth files for test data
+6. cd ROOT/data_preparation/
 
-4.算法改进。
+   run create_training_set_shtech.m in matlab to create training and validataion set along with ground truth files
 
-5.设计合适的交互式界面用于展示各自问题在处理对应场景下视频的流程。
+# Test
+1. Follow steps 1,2,3,4 and 5 from Data Setup
+2. Download pre-trained model files:
+
+   [[Shanghai Tech A](https://www.dropbox.com/s/8bxwvr4cj4bh5d8/mcnn_shtechA_660.h5?dl=0)]
+   
+   [[Shanghai Tech B](https://www.dropbox.com/s/kqqkl0exfshsw8v/mcnn_shtechB_110.h5?dl=0)]
+   
+   Save the model files under ROOT/final_models
+   
+3. Run test.py
+
+	a. Set save_output = True to save output density maps
+	
+	b. Errors are saved in  output directory
+
+# Training
+1. Follow steps 1,2,3,4 and 6 from Data Setup
+2. Run train.py
+
+
+# Training with TensorBoard
+With the aid of [Crayon](https://github.com/torrvision/crayon),
+we can access the visualisation power of TensorBoard for any 
+deep learning framework.
+
+To use the TensorBoard, install Crayon (https://github.com/torrvision/crayon)
+and set `use_tensorboard = True` in `ROOT/train.py`.
+
+# Other notes
+1. During training, the best model is chosen using error on the validation set. (It is not clear how the authors in the original implementation choose the best model).
+2. 10% of the training set is set asised for validation. The validation set is chosen randomly.
+3. The ground truth density maps are obtained using simple gaussian maps unlike the original method described in the paper.
+4. Following are the results on  Shanghai Tech A and B dataset:
+		
+                |     |  MAE  |   MSE  |
+                ------------------------
+                | A   |  110  |   169  |
+                ------------------------
+                | B   |   25  |    44  |
+		
+5. Also, please take a look at our new work on crowd counting using cascaded cnn and high-level prior (https://github.com/svishwa/crowdcount-cascaded-mtl),  which has improved results as compared to this work. 
+               
+
